@@ -8,7 +8,7 @@ app.use(morgan('combined'));
 app.use(bodyParser.urlencoded({extended: false}));
 
 const connection = mysql.createConnection({
-    host: 'localhost',
+    host: '192.168.43.220',
     user: 'root',
     database: 'db_sdc'
     

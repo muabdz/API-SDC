@@ -1,13 +1,13 @@
 const express = require('express');
+const routes = express.Router();
 const mysql = require('mysql');
 
-const routes = express.Router();
+// routes.use(express.json());
 
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     database: 'db_sdc'
-    
 });
 
 function connection(){
@@ -19,13 +19,13 @@ routes.post("/loginpenguji/:uid", (req, res) => {
     connection().query(queryPost, [paramsUid], (err, rows, fields) => {
         if(err) {
             console.log("Login Gagal");
-            res.json({
+            return res.json({
                 "message": "Petugas Gagal Login",
                 "status": false,
             });
         }
 
-        res.json({
+        return res.json({
             "message": "Petugas Berhasil Login",
             "status": true,
             "username": paramsUid
@@ -34,18 +34,26 @@ routes.post("/loginpenguji/:uid", (req, res) => {
 
 });
 
+routes.post("/test", (req, res) => {
+
+    console.log(req.body)
+
+})
+
 routes.post("/logoutpenguji/:uid", (req, res) => {
-    const paramsUid = req.params.uid;
+    console.log(req.params);
+    const paramsUid = req.params.username;
     const queryPost = "UPDATE tb_admin SET admin_status = 0 WHERE admin_username = ?";
     connection().query(queryPost, [paramsUid], (err, rows, fields) => {
         if(err) {
             console.log("Logout Gagal");
-            res.json({
+            console.log(req.body);
+            return res.json({
                 "message": "Petugas Gagal Logout",
                 "status": false,
             });
         }
-        res.json({
+        return res.json({
             "message": "Petugas Berhasil Logout",
             "status": true,
         });
@@ -53,32 +61,49 @@ routes.post("/logoutpenguji/:uid", (req, res) => {
 
 });
 
+
 routes.post("/soal", (req, res) => {
-    let bodySoal = [req.body.soal];
-    let bodyComments = req.body.comments;
+    console.log(req.body);
+    const reqBody = req.body;
+    const soal = reqBody.soal;
+    const comments = reqBody.comments;
+    const pesertaId = comments.peserta_id;
+    const pengetahuan = comments.pengetahuan;
+    const teknik = comments.teknik;
+    const perilaku = comments.perilaku;
+    const penguji = comments.penguji;
+    // let bodyComments = req.body.comments;
     const queryAnswer = "INSERT INTO tb_jawaban_praktek (soal_id, peserta_id, nilai, tanggal) VALUES(?,?,?,?)";
-    const queryComment = "INSERT INTO tb_komentar_praktek (peserta_id, pengetahuan, teknik, perilaku, admin_id) VALUES(?,?,?,?,?)";
-    connection().query(queryComment, [bodyComments.peserta_id, bodyComments.pengetahuan, bodyComments.teknik, bodyComments.perilaku, bodyComments.penguji], (err, rows, fields) => {
-        if(err) {
-            console.log("Submit Gagal");
-            res.json({
-                "message": "Gagal input data",
-                "status": false,
-            });
-        }
-    });
-    for (i=0;i<bodySoal.length; i++){
-        connection().query(queryAnswer, [bodySoal[i].soal_id, bodySoal[i].peserta_id, bodySoal[i].hasil, bodySoal[i].start], (err, rows, fields) => {
-            if(err) {
+    const queryComment = "INSERT INTO tb_komentar_praktek (peserta_id, pengetahuan, teknik, perilaku, admin_username) VALUES(?,?,?,?,?)";
+    // connection().query(queryComment, [bodyComments.peserta_id, bodyComments.pengetahuan, bodyComments.teknik, bodyComments.perilaku, bodyComments.penguji], (err, rows, fields) => {
+    for (i=0;i<soal.length; i++){
+        let soalId = soal[i].soal_id;
+        let pesertaId = soal[i].peserta_id;
+        let hasil = soal[i].hasil;
+        let start = soal[i].start;
+        connection().query(queryAnswer, [soalId, pesertaId, hasil, start], (err, rows, fields) => {
+                    if(err) {
                 console.log("Submit Gagal");
-                res.json({
+                return res.json({
                     "message": "Gagal input data",
                     "status": false,
                 });
             }
         }); 
     }
-    res.json({
+    connection().query(queryComment, [pesertaId, pengetahuan, teknik, perilaku, penguji], (err, rows, fields) => {
+            if(err) {
+            console.log("Submit Gagal");
+            return res.json({
+                "message": "Gagal input data",
+                "status": false,
+            });
+        }
+    });
+    // for (i=0;i<reqBody.length; i++){
+    //     connection().query(queryAnswer, [reqBody[i].soal_id, reqBody[i].peserta_id, reqBody[i].hasil, reqBody[i].start], (err, rows, fields) => {
+    
+    return res.json({
         "message": "Data sudah berhasil di input",
         "status": true
     });
@@ -90,7 +115,7 @@ routes.get("/peserta/:id", (req, res) => {
     connection().query(queryGetData, [paramsId], (err, rows, fields) => {
         if(err) {
             console.log("Login Gagal");
-            res.json({
+            return res.json({
                 "message": "Gagal membaca data peserta",
                 "status": false,
             });
@@ -106,10 +131,10 @@ routes.get("/peserta/:id", (req, res) => {
                 id: rows[i].soal_id,
                 nomor: rows[i].nomor,
                 soal:rows[i].soal,
-                cate: JSON.stringify(rows[i].kategori)
+                kategori: rows[i].kategori
             });
         }
-        res.json({
+        return res.json({
             data: data,
             message: "Berhasil membaca data peserta",
             soal: soal,
