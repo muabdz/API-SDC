@@ -11,7 +11,6 @@ app.use(bodyParser.urlencoded({
   app.use(bodyParser.json());
   app.use(function (req, res, next) {
     console.log(req.method, req.url, req.body);
-    console.log("asasasas")
     next();
   });
 // app.use(express.json());
